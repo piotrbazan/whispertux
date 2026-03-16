@@ -965,15 +965,17 @@ class WhisperTuxApp:
         # Position window in top-right corner (similar to electron version)
         self._position_window()
 
-        # Create scrollable main container
+        # Create control buttons fixed at the bottom (before scrollable area so they're always visible)
+        self._create_control_buttons()
+
+        # Create scrollable main container (fills remaining space above buttons)
         self._create_scrollable_main_frame()
 
-        # Create GUI sections
+        # Create GUI sections inside scrollable area
         self._create_header()
         self._create_status_section()
         self._create_audio_section()
         self._create_transcription_section()
-        self._create_control_buttons()
 
 
     def _create_scrollable_main_frame(self):
@@ -1213,9 +1215,9 @@ class WhisperTuxApp:
 
 
     def _create_control_buttons(self):
-        """Create the main control buttons"""
-        button_frame = ttk.Frame(self.main_frame)
-        button_frame.pack(fill=X, pady=(10, 0))
+        """Create the main control buttons, fixed at the bottom of the window"""
+        button_frame = ttk.Frame(self.root)
+        button_frame.pack(side=BOTTOM, fill=X, padx=20, pady=(5, 15))
 
         # Quit button (far left)
         quit_button = ttk.Button(
