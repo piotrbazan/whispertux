@@ -20,24 +20,26 @@ class TextInjector:
         if self.config_manager:
             self.key_delay = self.config_manager.get_setting('key_delay', 15)
             self.use_clipboard_fallback = self.config_manager.get_setting('use_clipboard', False)
+            self.injection_tool = self.config_manager.get_setting('injection_tool', 'ydotool')
         else:
             self.key_delay = 15  # Default key delay in milliseconds
             self.use_clipboard_fallback = False
+            self.injection_tool = 'ydotool'
 
-        # Check if ydotool is available
-        self.ydotool_available = self._check_ydotool()
+        # Check if ydotool/xdotool are available
+        self.ydotool_available = self._check_tool('ydotool')
+        self.xdotool_available = self._check_tool('xdotool')
 
-        if not self.ydotool_available:
+        if self.injection_tool == 'ydotool' and not self.ydotool_available:
             print("⚠️  ydotool not found - text injection will use clipboard fallback")
+        elif self.injection_tool == 'xdotool' and not self.xdotool_available:
+            print("⚠️  xdotool not found - text injection will use clipboard fallback")
 
-    def _check_ydotool(self) -> bool:
-        """Check if ydotool is available on the atiystem"""
+    def _check_tool(self, tool: str) -> bool:
+        """Check if a command-line tool is available"""
         try:
-            result = subprocess.run(['which', 'ydotool'],
-                                  capture_output=True, text=True, timeout=5)
+            result = subprocess.run(['which', tool], capture_output=True, text=True, timeout=5)
             return result.returncode == 0
-
-
         except:
             return False
 
@@ -59,18 +61,17 @@ class TextInjector:
         processed_text = self._preprocess_text(text)
         
         try:
-            # Try ydotool first if available
-            if self.ydotool_available:
+            if self.injection_tool == 'xdotool' and self.xdotool_available:
+                return self._inject_via_xdotool(processed_text)
+            elif self.ydotool_available:
                 return self._inject_via_ydotool(processed_text)
             else:
-                # Fall back to clipboard method
                 return self._inject_via_clipboard(processed_text)
 
         except Exception as e:
             print(f"Primary injection method failed: {e}")
 
-            # Try clipboard fallback if ydotool failed
-            if self.ydotool_available and self.use_clipboard_fallback:
+            if self.use_clipboard_fallback:
                 print("Falling back to clipboard method...")
                 try:
                     return self._inject_via_clipboard(processed_text)
@@ -193,6 +194,24 @@ class TextInjector:
             return False
         except Exception as e:
             print(f"ERROR: ydotool injection failed: {e}")
+            return False
+
+    def _inject_via_xdotool(self, text: str) -> bool:
+        """Inject text using xdotool (X11 only, handles long text well)"""
+        try:
+            cmd = ['xdotool', 'type', '--clearmodifiers', '--delay', str(self.key_delay), text]
+            print(f"Injecting text with xdotool: xdotool type --clearmodifiers --delay {self.key_delay} [text]")
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+            if result.returncode == 0:
+                return True
+            else:
+                print(f"ERROR: xdotool failed: {result.stderr}")
+                return False
+        except subprocess.TimeoutExpired:
+            print("ERROR: xdotool command timed out")
+            return False
+        except Exception as e:
+            print(f"ERROR: xdotool injection failed: {e}")
             return False
 
     def _inject_via_clipboard(self, text: str) -> bool:

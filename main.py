@@ -308,6 +308,22 @@ class SettingsDialog:
         )
         download_button.pack(side=RIGHT)
 
+        # Language selection
+        language_frame = ttk.Frame(model_frame)
+        language_frame.pack(fill=X, pady=(10, 0))
+
+        ttk.Label(language_frame, text="Language:").pack(side=LEFT)
+
+        self.language_var = tk.StringVar(value=self.config.get_setting('language', 'en'))
+        language_combo = ttk.Combobox(
+            language_frame,
+            textvariable=self.language_var,
+            values=['en', 'auto'],
+            state="readonly",
+            width=10
+        )
+        language_combo.pack(side=RIGHT)
+
     def _create_general_section(self, parent):
         """Create the general settings section"""
         general_frame = ttk.LabelFrame(parent, text="General Settings", padding=15)
@@ -325,6 +341,22 @@ class SettingsDialog:
             bootstyle="round-toggle"
         )
         always_on_top_check.pack(anchor=W)
+
+        # Injection tool selection
+        injection_tool_frame = ttk.Frame(general_frame)
+        injection_tool_frame.pack(fill=X, pady=(5, 5))
+
+        ttk.Label(injection_tool_frame, text="Injection tool:").pack(side=LEFT)
+
+        self.injection_tool_var = tk.StringVar(value=self.config.get_setting('injection_tool', 'ydotool'))
+        injection_tool_combo = ttk.Combobox(
+            injection_tool_frame,
+            textvariable=self.injection_tool_var,
+            values=['ydotool', 'xdotool'],
+            state='readonly',
+            width=12
+        )
+        injection_tool_combo.pack(side=RIGHT)
 
         # Use clipboard option (moved above typing speed)
         clipboard_frame = ttk.Frame(general_frame)
@@ -692,8 +724,10 @@ class SettingsDialog:
             self.config.set_setting('primary_shortcut', new_shortcut)
             self.config.set_setting('always_on_top', self.always_on_top_var.get())
             self.config.set_setting('use_clipboard', self.use_clipboard_var.get())
+            self.config.set_setting('injection_tool', self.injection_tool_var.get())
             self.config.set_setting('keyboard_device', selected_keyboard_path)
             self.config.set_setting('push_to_talk', self.push_to_talk_var.get())
+            self.config.set_setting('language', self.language_var.get())
 
             # Update model setting if changed
             new_model = self.model_var.get()
@@ -779,6 +813,7 @@ class SettingsDialog:
             # Update other settings
             self.config.set_setting('always_on_top', self.always_on_top_var.get())
             self.config.set_setting('use_clipboard', self.use_clipboard_var.get())
+            self.config.set_setting('injection_tool', self.injection_tool_var.get())
 
             # Save configuration
             if self.config.save_config():
@@ -814,6 +849,7 @@ class SettingsDialog:
                 self.always_on_top_var.set(self.config.get_setting('always_on_top'))
                 self.key_delay_var.set(str(self.config.get_setting('key_delay')))
                 self.use_clipboard_var.set(self.config.get_setting('use_clipboard'))
+                self.injection_tool_var.set(self.config.get_setting('injection_tool', 'ydotool'))
 
                 # Update the current shortcut display in the dialog
                 if self.current_shortcut_label:
@@ -905,6 +941,7 @@ class WhisperTuxApp:
         self.model_combo = None
         self.shortcut_display_label = None
 
+
         # Initialize GUI
         self._setup_gui()
         self._setup_global_shortcuts()
@@ -922,7 +959,7 @@ class WhisperTuxApp:
         )
 
         # Configure window properties to match the electron version
-        self.root.attributes('-topmost', True)  # Always on top
+        self.root.attributes('-topmost', self.config.get_setting('always_on_top', True))
         self.root.protocol("WM_DELETE_WINDOW", self._on_closing)
 
         # Position window in top-right corner (similar to electron version)
