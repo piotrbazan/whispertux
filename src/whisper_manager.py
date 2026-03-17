@@ -145,7 +145,7 @@ class WhisperManager:
                 '-f', audio_file_path,
                 '--output-txt',
                 '--language', self.config.get_setting('language', 'en'),
-                '--threads', '4'
+                '--threads', str(self.config.get_setting('whisper_threads', 4))
             ]
             
             # Run the command

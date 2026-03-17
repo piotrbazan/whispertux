@@ -331,6 +331,24 @@ class SettingsDialog:
         )
         language_combo.pack(side=RIGHT)
 
+        # CPU threads selection
+        import os
+        max_threads = os.cpu_count() or 8
+        threads_frame = ttk.Frame(model_frame)
+        threads_frame.pack(fill=X, pady=(10, 0))
+
+        ttk.Label(threads_frame, text=f"CPU Threads (max {max_threads}):").pack(side=LEFT)
+
+        self.threads_var = tk.IntVar(value=self.config.get_setting('whisper_threads', max(1, max_threads // 2)))
+        threads_spin = ttk.Spinbox(
+            threads_frame,
+            from_=1,
+            to=max_threads,
+            textvariable=self.threads_var,
+            width=5
+        )
+        threads_spin.pack(side=RIGHT)
+
     def _create_general_section(self, parent):
         """Create the general settings section"""
         general_frame = ttk.LabelFrame(parent, text="General Settings", padding=15)
@@ -735,6 +753,7 @@ class SettingsDialog:
             self.config.set_setting('keyboard_device', selected_keyboard_path)
             self.config.set_setting('push_to_talk', self.push_to_talk_var.get())
             self.config.set_setting('language', self.language_var.get())
+            self.config.set_setting('whisper_threads', self.threads_var.get())
 
             # Update model setting if changed
             new_model = self.model_var.get()
@@ -857,6 +876,7 @@ class SettingsDialog:
                 self.key_delay_var.set(str(self.config.get_setting('key_delay')))
                 self.use_clipboard_var.set(self.config.get_setting('use_clipboard'))
                 self.injection_tool_var.set(self.config.get_setting('injection_tool', 'xdotool'))
+                self.threads_var.set(self.config.get_setting('whisper_threads', 4))
 
                 # Update the current shortcut display in the dialog
                 if self.current_shortcut_label:
