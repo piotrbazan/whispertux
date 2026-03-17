@@ -20,11 +20,11 @@ class TextInjector:
         if self.config_manager:
             self.key_delay = self.config_manager.get_setting('key_delay', 15)
             self.use_clipboard_fallback = self.config_manager.get_setting('use_clipboard', False)
-            self.injection_tool = self.config_manager.get_setting('injection_tool', 'ydotool')
+            self.injection_tool = self.config_manager.get_setting('injection_tool', 'xdotool')
         else:
             self.key_delay = 15  # Default key delay in milliseconds
             self.use_clipboard_fallback = False
-            self.injection_tool = 'ydotool'
+            self.injection_tool = 'xdotool'
 
         # Check if ydotool/xdotool are available
         self.ydotool_available = self._check_tool('ydotool')

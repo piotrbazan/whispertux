@@ -355,7 +355,7 @@ class SettingsDialog:
 
         ttk.Label(injection_tool_frame, text="Injection tool:").pack(side=LEFT)
 
-        self.injection_tool_var = tk.StringVar(value=self.config.get_setting('injection_tool', 'ydotool'))
+        self.injection_tool_var = tk.StringVar(value=self.config.get_setting('injection_tool', 'xdotool'))
         injection_tool_combo = ttk.Combobox(
             injection_tool_frame,
             textvariable=self.injection_tool_var,
@@ -856,7 +856,7 @@ class SettingsDialog:
                 self.always_on_top_var.set(self.config.get_setting('always_on_top'))
                 self.key_delay_var.set(str(self.config.get_setting('key_delay')))
                 self.use_clipboard_var.set(self.config.get_setting('use_clipboard'))
-                self.injection_tool_var.set(self.config.get_setting('injection_tool', 'ydotool'))
+                self.injection_tool_var.set(self.config.get_setting('injection_tool', 'xdotool'))
 
                 # Update the current shortcut display in the dialog
                 if self.current_shortcut_label:

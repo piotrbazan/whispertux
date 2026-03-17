@@ -56,7 +56,7 @@ The setup creates a virtualenv at `./venv/`. whisper.cpp lives in `whisper.cpp/`
 User config stored at `~/.config/whispertux/config.json`. Defaults:
 - `primary_shortcut`: `F12`
 - `model`: `base`
-- `injection_tool`: `ydotool`
+- `injection_tool`: `xdotool`
 - `push_to_talk`: `false` (hold vs. toggle mode)
 - `language`: `en`
 - `key_delay`: `15` (ms)

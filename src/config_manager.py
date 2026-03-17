@@ -26,7 +26,7 @@ class ConfigManager:
             'word_overrides': {},  # Dictionary of word replacements: {"original": "replacement"}
             'push_to_talk': False,  # Hold key to record, release to stop
             'language': 'en',  # Whisper language: 'en' or 'auto' (auto-detect)
-            'injection_tool': 'ydotool'  # Text injection tool: 'ydotool' or 'xdotool'
+            'injection_tool': 'xdotool'  # Text injection tool: 'ydotool' or 'xdotool'
         }
         
         # Set up config directory and file path
