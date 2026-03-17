@@ -275,6 +275,14 @@ class SettingsDialog:
 
         ttk.Label(model_selection_frame, text="Whisper Model:").pack(side=LEFT)
 
+        ttk.Button(
+            model_selection_frame,
+            text="Download",
+            command=self._show_model_download_from_settings,
+            bootstyle=INFO,
+            width=10
+        ).pack(side=RIGHT, padx=(5, 0))
+
         # Get available models from whisper manager
         try:
             available_models = []
@@ -301,19 +309,6 @@ class SettingsDialog:
             self.model_var.set(current_model)
         elif available_models and available_models[0] != "No models found":
             self.model_var.set(available_models[0])
-
-        # Download Models button
-        download_frame = ttk.Frame(model_frame)
-        download_frame.pack(fill=X, pady=(10, 0))
-
-        download_button = ttk.Button(
-            download_frame,
-            text="Download Models",
-            command=self._show_model_download_from_settings,
-            bootstyle=INFO,
-            width=15
-        )
-        download_button.pack(side=RIGHT)
 
         # Language selection
         language_frame = ttk.Frame(model_frame)
@@ -631,7 +626,7 @@ class SettingsDialog:
         # Cancel button
         cancel_button = ttk.Button(
             button_frame,
-            text="✖️ Cancel",
+            text="Cancel",
             command=self._cancel,
             bootstyle=SECONDARY,
             width=12
