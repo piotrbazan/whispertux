@@ -190,7 +190,7 @@ compile_whisper() {
     # Create build directory and compile using cmake
     mkdir -p build
     cd build
-    cmake ..
+    cmake .. -DCMAKE_C_FLAGS="-march=native" -DCMAKE_CXX_FLAGS="-march=native"
     make -j$(nproc)
 
     # Check if whisper-cli binary was created
