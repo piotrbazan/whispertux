@@ -740,10 +740,10 @@ class SettingsDialog:
             new_model = self.model_var.get()
             if new_model != "No models found":
                 self.config.set_setting('model', new_model)
-                # Update the parent's whisper manager
-                if hasattr(self.parent, 'whisper_manager'):
+                # Update the whisper manager immediately (no restart needed)
+                if self.app_instance and hasattr(self.app_instance, 'whisper_manager'):
                     try:
-                        self.parent.whisper_manager.set_model(new_model)
+                        self.app_instance.whisper_manager.set_model(new_model)
                     except Exception as e:
                         print(f"Failed to update model: {e}")
 
