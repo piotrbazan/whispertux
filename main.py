@@ -119,7 +119,7 @@ class SettingsDialog:
         self.dialog_canvas.bind('<Leave>', unbind_dialog_mousewheel)
 
         # Scrollbar must be packed before canvas (both use side, order matters)
-        self.dialog_scrollbar.pack(side="right", fill="y", padx=(0, 10), pady=(12, 0))
+        self.dialog_scrollbar.pack(side="right", fill="y", padx=(6, 10), pady=(12, 0))
         self.dialog_canvas.pack(side="left", fill="both", expand=True, padx=(10, 0), pady=(12, 0))
 
     def _size_and_center_dialog(self):
@@ -276,10 +276,10 @@ class SettingsDialog:
 
         ttk.Button(
             model_selection_frame,
-            text="Download",
+            text="Download New",
             command=self._show_model_download_from_settings,
             bootstyle=INFO,
-            width=10
+            width=13
         ).pack(side=RIGHT, padx=(5, 0))
 
         # Get available models from whisper manager
@@ -1045,7 +1045,7 @@ class WhisperTuxApp:
         self.canvas.bind('<Leave>', unbind_mousewheel)
 
         # Scrollbar must be packed before canvas (both use side, order matters)
-        self.scrollbar.pack(side="right", fill="y", padx=(0, 10), pady=(12, 0))
+        self.scrollbar.pack(side="right", fill="y", padx=(6, 10), pady=(12, 0))
         self.canvas.pack(side="left", fill="both", expand=True, padx=(10, 0), pady=(12, 0))
 
         # Set main_frame to scrollable_frame for compatibility
