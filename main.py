@@ -172,6 +172,15 @@ class SettingsDialog:
 
         ttk.Label(selection_frame, text="New Shortcut:").pack(side=LEFT)
 
+        self.test_button = ttk.Button(
+            selection_frame,
+            text="Test",
+            command=self._test_shortcut,
+            bootstyle=INFO,
+            width=6
+        )
+        self.test_button.pack(side=RIGHT, padx=(5, 0))
+
         # Available shortcut options
         shortcut_options = [
             'F1', 'F2', 'F3', 'F4', 'F5', 'F6',
@@ -230,26 +239,16 @@ class SettingsDialog:
         )
         self.shortcut_combo.pack(side=RIGHT)
 
-        # Test shortcut button
-        test_frame = ttk.Frame(shortcuts_frame)
-        test_frame.pack(fill=X, pady=(10, 0))
-
-        self.test_button = ttk.Button(
-            test_frame,
-            text="Test Shortcut",
-            command=self._test_shortcut,
-            bootstyle=INFO,
-            width=15
-        )
-        self.test_button.pack(side=LEFT)
-
         # Status label for test results
+        test_status_frame = ttk.Frame(shortcuts_frame)
+        test_status_frame.pack(fill=X, pady=(5, 0))
+
         self.test_status_label = ttk.Label(
-            test_frame,
+            test_status_frame,
             text="",
             font=("Arial", 9),
         )
-        self.test_status_label.pack(side=RIGHT, padx=(10, 0))
+        self.test_status_label.pack(side=LEFT)
 
         # Push-to-talk mode
         ptt_frame = ttk.Frame(shortcuts_frame)
@@ -326,24 +325,6 @@ class SettingsDialog:
         )
         language_combo.pack(side=RIGHT)
 
-        # CPU threads selection
-        import os
-        max_threads = os.cpu_count() or 8
-        threads_frame = ttk.Frame(model_frame)
-        threads_frame.pack(fill=X, pady=(10, 0))
-
-        ttk.Label(threads_frame, text=f"CPU Threads (max {max_threads}):").pack(side=LEFT)
-
-        self.threads_var = tk.IntVar(value=self.config.get_setting('whisper_threads', max(1, max_threads // 2)))
-        threads_spin = ttk.Spinbox(
-            threads_frame,
-            from_=1,
-            to=max_threads,
-            textvariable=self.threads_var,
-            width=5
-        )
-        threads_spin.pack(side=RIGHT)
-
     def _create_general_section(self, parent):
         """Create the general settings section"""
         general_frame = ttk.LabelFrame(parent, text="General Settings", padding=15)
@@ -404,6 +385,24 @@ class SettingsDialog:
             width=10
         )
         key_delay_entry.pack(side=RIGHT)
+
+        # CPU threads selection
+        import os
+        max_threads = os.cpu_count() or 8
+        threads_frame = ttk.Frame(general_frame)
+        threads_frame.pack(fill=X, pady=(5, 5))
+
+        ttk.Label(threads_frame, text=f"CPU Threads (max {max_threads}):").pack(side=LEFT)
+
+        self.threads_var = tk.IntVar(value=self.config.get_setting('whisper_threads', max(1, max_threads // 2)))
+        threads_spin = ttk.Spinbox(
+            threads_frame,
+            from_=1,
+            to=max_threads,
+            textvariable=self.threads_var,
+            width=5
+        )
+        threads_spin.pack(side=RIGHT)
 
         # Keyboard device selection
         keyboard_frame = ttk.Frame(general_frame)
