@@ -47,18 +47,16 @@ class SettingsDialog:
         """Create the settings dialog window"""
         self.dialog = tk.Toplevel(self.parent)
         self.dialog.title("WhisperTux Settings")
-        self.dialog.geometry("520x600")
         self.dialog.resizable(True, True)
         self.dialog.minsize(520, 400)
         self.dialog.transient(self.parent)
         self.dialog.grab_set()
 
-        # Center the dialog on parent window
-        self._center_dialog()
+        # Buttons must be packed BEFORE the canvas so pack(side=BOTTOM) reserves space first
+        self._create_buttons(self.dialog)
 
-        # Create scrollable container
+        # Create scrollable container (fills remaining space above buttons)
         self._create_scrollable_dialog_frame()
-
 
         # Global Shortcuts Section
         self._create_shortcuts_section(self.scrollable_dialog_frame)
@@ -72,8 +70,8 @@ class SettingsDialog:
         # Word Overrides Section
         self._create_word_overrides_section(self.scrollable_dialog_frame)
 
-        # Buttons
-        self._create_buttons(self.scrollable_dialog_frame)
+        # Size and center after content is built
+        self._size_and_center_dialog()
 
     def _create_scrollable_dialog_frame(self):
         """Create a scrollable frame for the settings dialog"""
@@ -97,39 +95,49 @@ class SettingsDialog:
             self.dialog_canvas.itemconfig(self.dialog_canvas_window, width=event.width)
         self.dialog_canvas.bind('<Configure>', on_dialog_canvas_configure)
 
-        # Bind mousewheel to scroll
+        # Bind mousewheel to scroll (Linux uses Button-4/5, Windows/macOS use MouseWheel)
         def on_dialog_mousewheel(event):
             self.dialog_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
+        def on_dialog_mousewheel_linux(event):
+            if event.num == 4:
+                self.dialog_canvas.yview_scroll(-1, "units")
+            elif event.num == 5:
+                self.dialog_canvas.yview_scroll(1, "units")
+
         def bind_dialog_mousewheel(event):
             self.dialog_canvas.bind_all("<MouseWheel>", on_dialog_mousewheel)
+            self.dialog_canvas.bind_all("<Button-4>", on_dialog_mousewheel_linux)
+            self.dialog_canvas.bind_all("<Button-5>", on_dialog_mousewheel_linux)
 
         def unbind_dialog_mousewheel(event):
             self.dialog_canvas.unbind_all("<MouseWheel>")
+            self.dialog_canvas.unbind_all("<Button-4>")
+            self.dialog_canvas.unbind_all("<Button-5>")
 
         self.dialog_canvas.bind('<Enter>', bind_dialog_mousewheel)
         self.dialog_canvas.bind('<Leave>', unbind_dialog_mousewheel)
 
-        # Pack canvas and scrollbar with proper spacing
-        self.dialog_canvas.pack(side="left", fill="both", expand=True, padx=(20, 10), pady=20)
-        self.dialog_scrollbar.pack(side="right", fill="y", padx=(10, 20), pady=20)
+        # Scrollbar must be packed before canvas (both use side, order matters)
+        self.dialog_scrollbar.pack(side="right", fill="y", padx=(0, 10), pady=(12, 0))
+        self.dialog_canvas.pack(side="left", fill="both", expand=True, padx=(10, 0), pady=(12, 0))
 
-    def _center_dialog(self):
-        """Center the dialog on the parent window"""
+    def _size_and_center_dialog(self):
+        """Size the dialog to fit on screen and center it"""
         self.dialog.update_idletasks()
 
-        parent_x = self.parent.winfo_rootx()
-        parent_y = self.parent.winfo_rooty()
-        parent_width = self.parent.winfo_width()
-        parent_height = self.parent.winfo_height()
+        screen_width = self.dialog.winfo_screenwidth()
+        screen_height = self.dialog.winfo_screenheight()
 
-        dialog_width = self.dialog.winfo_reqwidth()
-        dialog_height = self.dialog.winfo_reqheight()
+        dialog_width = 540
+        # Leave some margin for taskbars etc.
+        max_height = screen_height - 80
+        dialog_height = min(700, max_height)
 
-        x = parent_x + (parent_width - dialog_width) // 2
-        y = parent_y + (parent_height - dialog_height) // 2
+        x = (screen_width - dialog_width) // 2
+        y = max(20, (screen_height - dialog_height) // 2)
 
-        self.dialog.geometry(f"+{x}+{y}")
+        self.dialog.geometry(f"{dialog_width}x{dialog_height}+{x}+{y}")
 
     def _create_shortcuts_section(self, parent):
         """Create the global shortcuts configuration section"""
@@ -269,10 +277,9 @@ class SettingsDialog:
 
         # Get available models from whisper manager
         try:
-            # Access the parent's whisper manager through the parent window
             available_models = []
-            if hasattr(self.parent, 'whisper_manager'):
-                available_models = self.parent.whisper_manager.get_available_models()
+            if self.app_instance and hasattr(self.app_instance, 'whisper_manager'):
+                available_models = self.app_instance.whisper_manager.get_available_models()
             if not available_models:
                 available_models = ["No models found"]
         except:
@@ -599,9 +606,9 @@ class SettingsDialog:
         self._refresh_overrides_list()
 
     def _create_buttons(self, parent):
-        """Create dialog action buttons"""
+        """Create dialog action buttons (always visible, outside scroll area)"""
         button_frame = ttk.Frame(parent)
-        button_frame.pack(fill=X, pady=(20, 0))
+        button_frame.pack(fill=X, side=BOTTOM, padx=20, pady=(8, 12))
 
         # Cancel button
         cancel_button = ttk.Button(
@@ -1000,22 +1007,32 @@ class WhisperTuxApp:
             self.canvas.itemconfig(self.canvas_window, width=event.width)
         self.canvas.bind('<Configure>', on_canvas_configure)
 
-        # Bind mousewheel to scroll
+        # Bind mousewheel to scroll (Linux uses Button-4/5, Windows/macOS use MouseWheel)
         def on_mousewheel(event):
             self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
+        def on_mousewheel_linux(event):
+            if event.num == 4:
+                self.canvas.yview_scroll(-1, "units")
+            elif event.num == 5:
+                self.canvas.yview_scroll(1, "units")
+
         def bind_mousewheel(event):
             self.canvas.bind_all("<MouseWheel>", on_mousewheel)
+            self.canvas.bind_all("<Button-4>", on_mousewheel_linux)
+            self.canvas.bind_all("<Button-5>", on_mousewheel_linux)
 
         def unbind_mousewheel(event):
             self.canvas.unbind_all("<MouseWheel>")
+            self.canvas.unbind_all("<Button-4>")
+            self.canvas.unbind_all("<Button-5>")
 
         self.canvas.bind('<Enter>', bind_mousewheel)
         self.canvas.bind('<Leave>', unbind_mousewheel)
 
-        # Pack canvas and scrollbar with proper spacing
-        self.canvas.pack(side="left", fill="both", expand=True, padx=(20, 10), pady=20)
-        self.scrollbar.pack(side="right", fill="y", padx=(10, 20), pady=20)
+        # Scrollbar must be packed before canvas (both use side, order matters)
+        self.scrollbar.pack(side="right", fill="y", padx=(0, 10), pady=(12, 0))
+        self.canvas.pack(side="left", fill="both", expand=True, padx=(10, 0), pady=(12, 0))
 
         # Set main_frame to scrollable_frame for compatibility
         self.main_frame = self.scrollable_frame

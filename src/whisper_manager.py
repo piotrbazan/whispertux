@@ -220,27 +220,12 @@ class WhisperManager:
         """Get list of available whisper models"""
         models_dir = self.config.get_whisper_model_path('').parent
         available_models = []
-        
-        # Look for the supported model files
-        supported_models = ['tiny', 'base', 'small', 'medium', 'large']
-        
-        for model in supported_models:
-            # Check for both English-only and multilingual versions
-            model_files = [
-                models_dir / f"ggml-{model}.en.bin",  # English-only
-                models_dir / f"ggml-{model}.bin"      # Multilingual
-            ]
-            
-            for model_file in model_files:
-                if model_file.exists():
-                    # Add model name with suffix if it's English-only
-                    if model_file.name.endswith('.en.bin'):
-                        model_name = f"{model}.en"
-                    else:
-                        model_name = model
-                    
-                    if model_name not in available_models:
-                        available_models.append(model_name)
-                    break  # Don't add both versions of same model
-        
-        return sorted(available_models)
+
+        for model_file in sorted(models_dir.glob("ggml-*.bin")):
+            name = model_file.stem  # e.g. "ggml-small-q8_0"
+            if not name.startswith("ggml-"):
+                continue
+            model_name = name[len("ggml-"):]  # e.g. "small-q8_0"
+            available_models.append(model_name)
+
+        return available_models
