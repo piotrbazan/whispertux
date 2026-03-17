@@ -1546,53 +1546,56 @@ class WhisperTuxApp:
 
     def _show_model_download(self, callback=None):
         """Show model download dialog"""
-        from tkinter import simpledialog
-
-        # List of available models to download
-        available_models = [
-            "base.en", "small.en", "medium.en", "large-v3",
-            "base", "small", "medium", "large"
+        # Full list of models supported by whisper.cpp download script
+        all_models = [
+            "tiny", "tiny.en", "tiny-q5_1", "tiny.en-q5_1", "tiny-q8_0",
+            "base", "base.en", "base-q5_1", "base.en-q5_1", "base-q8_0",
+            "small", "small.en", "small-q5_1", "small.en-q5_1", "small-q8_0",
+            "medium", "medium.en", "medium-q5_0", "medium.en-q5_0", "medium-q8_0",
+            "large-v1", "large-v2", "large-v2-q5_0", "large-v2-q8_0",
+            "large-v3", "large-v3-q5_0",
+            "large-v3-turbo", "large-v3-turbo-q5_0", "large-v3-turbo-q8_0",
         ]
+
+        project_root = Path(__file__).parent
+        models_dir = project_root / "whisper.cpp" / "models"
+
+        def is_downloaded(model):
+            return (models_dir / f"ggml-{model}.bin").exists()
+
+        def make_label(model):
+            return f"{model}  ✓" if is_downloaded(model) else model
 
         # Create a custom dialog for model selection
         dialog = tk.Toplevel(self.root)
         dialog.title("Download Whisper Models")
-        dialog.geometry("400x300")
         dialog.transient(self.root)
         dialog.grab_set()
 
         # Center dialog
         dialog.update_idletasks()
-        x = (dialog.winfo_screenwidth() - dialog.winfo_reqwidth()) // 2
-        y = (dialog.winfo_screenheight() - dialog.winfo_reqheight()) // 2
-        dialog.geometry(f"+{x}+{y}")
+        dialog_w, dialog_h = 440, 340
+        x = (dialog.winfo_screenwidth() - dialog_w) // 2
+        y = (dialog.winfo_screenheight() - dialog_h) // 2
+        dialog.geometry(f"{dialog_w}x{dialog_h}+{x}+{y}")
 
         # Title
-        title_label = ttk.Label(
-            dialog,
-            text="Download Whisper Models",
-            font=("Arial", 14, "bold")
-        )
-        title_label.pack(pady=10)
+        ttk.Label(dialog, text="Download Whisper Models", font=("Arial", 14, "bold")).pack(pady=10)
 
         # Instructions
-        info_label = ttk.Label(
-            dialog,
-            text="Select a model to download:",
-            font=("Arial", 10)
-        )
-        info_label.pack(pady=5)
+        ttk.Label(dialog, text="Select a model to download  (✓ = already downloaded):", font=("Arial", 10)).pack(pady=(0, 5))
 
-        # Model selection
-        model_var = tk.StringVar(value=available_models[0])
+        # Model selection — display labels with ✓ but track actual model name
+        display_labels = [make_label(m) for m in all_models]
+        model_label_var = tk.StringVar(value=display_labels[0])
         model_combo = ttk.Combobox(
             dialog,
-            textvariable=model_var,
-            values=available_models,
+            textvariable=model_label_var,
+            values=display_labels,
             state="readonly",
-            width=20
+            width=30
         )
-        model_combo.pack(pady=10)
+        model_combo.pack(pady=5)
 
         # Progress bar
         progress = ttk.Progressbar(dialog, mode='indeterminate')
@@ -1607,17 +1610,14 @@ class WhisperTuxApp:
         button_frame.pack(pady=10)
 
         def download_model():
-            selected_model = model_var.get()
+            label = model_label_var.get()
+            # Strip the ✓ suffix to get the real model name
+            selected_model = all_models[display_labels.index(label)]
             status_label.config(text=f"Downloading {selected_model}...")
             progress.start()
 
             def download_thread():
                 try:
-                    project_root = Path(__file__).parent
-                    models_dir = project_root / "whisper.cpp" / "models"
-
-                    # Use the download script
-                    import subprocess
                     result = subprocess.run([
                         "bash",
                         str(models_dir / "download-ggml-model.sh"),
@@ -1625,39 +1625,29 @@ class WhisperTuxApp:
                     ], cwd=str(models_dir), capture_output=True, text=True)
 
                     if result.returncode == 0:
-                        dialog.after(100, lambda: status_label.config(text=f"✅ {selected_model} downloaded successfully!"))
+                        # Refresh ✓ markers in the combo
+                        new_labels = [make_label(m) for m in all_models]
+                        dialog.after(100, lambda: model_combo.configure(values=new_labels))
+                        dialog.after(100, lambda: model_label_var.set(make_label(selected_model)))
+                        dialog.after(100, lambda: status_label.config(
+                            text=f"✅ {selected_model} downloaded successfully!", bootstyle=SUCCESS))
                         dialog.after(100, lambda: progress.stop())
-                        # Refresh model combo in main window
-                        dialog.after(2000, lambda: self._refresh_model_combo())
-                        # Call the callback to refresh settings dialog if provided
+                        dialog.after(100, lambda: self._refresh_model_combo())
                         if callback:
-                            dialog.after(2000, callback)
-                        dialog.after(2000, lambda: dialog.destroy())
+                            dialog.after(100, callback)
                     else:
-                        dialog.after(100, lambda: status_label.config(text=f"❌ Download failed: {result.stderr[:50]}..."))
+                        err = result.stderr.strip()[:60] if result.stderr else result.stdout.strip()[:60]
+                        dialog.after(100, lambda: status_label.config(text=f"❌ {err}", bootstyle=DANGER))
                         dialog.after(100, lambda: progress.stop())
 
                 except Exception as e:
-                    dialog.after(100, lambda: status_label.config(text=f"❌ Error: {str(e)[:50]}..."))
+                    dialog.after(100, lambda: status_label.config(text=f"❌ Error: {str(e)[:60]}", bootstyle=DANGER))
                     dialog.after(100, lambda: progress.stop())
 
             threading.Thread(target=download_thread, daemon=True).start()
 
-        download_button = ttk.Button(
-            button_frame,
-            text="Download",
-            command=download_model,
-            bootstyle=SUCCESS
-        )
-        download_button.pack(side=LEFT, padx=5)
-
-        cancel_button = ttk.Button(
-            button_frame,
-            text="Cancel",
-            command=dialog.destroy,
-            bootstyle=SECONDARY
-        )
-        cancel_button.pack(side=LEFT, padx=5)
+        ttk.Button(button_frame, text="Download", command=download_model, bootstyle=SUCCESS).pack(side=LEFT, padx=5)
+        ttk.Button(button_frame, text="Close", command=dialog.destroy, bootstyle=SECONDARY).pack(side=LEFT, padx=5)
 
     def _refresh_model_combo(self):
         """Refresh the model settings after downloading new models"""
