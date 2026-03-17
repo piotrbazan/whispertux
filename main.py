@@ -343,23 +343,7 @@ class SettingsDialog:
         )
         always_on_top_check.pack(anchor=W)
 
-        # Injection tool selection
-        injection_tool_frame = ttk.Frame(general_frame)
-        injection_tool_frame.pack(fill=X, pady=(5, 5))
-
-        ttk.Label(injection_tool_frame, text="Injection tool:").pack(side=LEFT)
-
-        self.injection_tool_var = tk.StringVar(value=self.config.get_setting('injection_tool', 'xdotool'))
-        injection_tool_combo = ttk.Combobox(
-            injection_tool_frame,
-            textvariable=self.injection_tool_var,
-            values=['ydotool', 'xdotool'],
-            state='readonly',
-            width=12
-        )
-        injection_tool_combo.pack(side=RIGHT)
-
-        # Use clipboard option (moved above typing speed)
+        # Use clipboard option
         clipboard_frame = ttk.Frame(general_frame)
         clipboard_frame.pack(fill=X, pady=(5, 5))
 
@@ -447,6 +431,22 @@ class SettingsDialog:
             width=35
         )
         keyboard_combo.pack(side=RIGHT)
+
+        # Injection tool selection
+        injection_tool_frame = ttk.Frame(general_frame)
+        injection_tool_frame.pack(fill=X, pady=(5, 0))
+
+        ttk.Label(injection_tool_frame, text="Injection tool:").pack(side=LEFT)
+
+        self.injection_tool_var = tk.StringVar(value=self.config.get_setting('injection_tool', 'xdotool'))
+        injection_tool_combo = ttk.Combobox(
+            injection_tool_frame,
+            textvariable=self.injection_tool_var,
+            values=['ydotool', 'xdotool'],
+            state='readonly',
+            width=12
+        )
+        injection_tool_combo.pack(side=RIGHT)
 
     def _create_word_overrides_section(self, parent):
         """Create the word overrides configuration section"""
