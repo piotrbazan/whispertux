@@ -7,6 +7,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import ttkbootstrap as ttk_style
 from ttkbootstrap.constants import *
+import subprocess
 import threading
 import time
 import os
@@ -895,7 +896,8 @@ class SettingsDialog:
         # Just delegate to the app instance's method
         if self.app_instance and hasattr(self.app_instance, '_show_model_download'):
             # Pass a callback to refresh this dialog's model combo after download
-            self.app_instance._show_model_download(callback=self._refresh_model_combo_dialog)
+            # Pass self.dialog as parent so the download dialog stacks on top of settings
+            self.app_instance._show_model_download(callback=self._refresh_model_combo_dialog, parent=self.dialog)
 
     def _refresh_model_combo_dialog(self):
         """Refresh the model combo box in this settings dialog"""
@@ -1558,7 +1560,7 @@ class WhisperTuxApp:
         """Show info message"""
         messagebox.showinfo("Info", message)
 
-    def _show_model_download(self, callback=None):
+    def _show_model_download(self, callback=None, parent=None):
         """Show model download dialog"""
         # Full list of models supported by whisper.cpp download script
         all_models = [
@@ -1581,9 +1583,10 @@ class WhisperTuxApp:
             return f"{model}  ✓" if is_downloaded(model) else model
 
         # Create a custom dialog for model selection
-        dialog = tk.Toplevel(self.root)
+        parent_window = parent if parent else self.root
+        dialog = tk.Toplevel(parent_window)
         dialog.title("Download Whisper Models")
-        dialog.transient(self.root)
+        dialog.transient(parent_window)
         dialog.grab_set()
 
         # Center dialog
@@ -1655,7 +1658,8 @@ class WhisperTuxApp:
                         dialog.after(100, lambda: progress.stop())
 
                 except Exception as e:
-                    dialog.after(100, lambda: status_label.config(text=f"❌ Error: {str(e)[:60]}", bootstyle=DANGER))
+                    err_msg = str(e)[:60]
+                    dialog.after(100, lambda: status_label.config(text=f"❌ Error: {err_msg}", bootstyle=DANGER))
                     dialog.after(100, lambda: progress.stop())
 
             threading.Thread(target=download_thread, daemon=True).start()
